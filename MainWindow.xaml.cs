@@ -93,7 +93,7 @@ public partial class MainWindow : Window
 
     private async void Embedding_Click(object sender, RoutedEventArgs e)
     {
-        // 切换书籍
+        // 对书籍做向量化操作
         if (BooksComboBox.SelectedItem == null)
         {
             MessageBox.Show("请选择一本书籍。");
@@ -111,7 +111,8 @@ public partial class MainWindow : Window
 
         if (File.Exists(ragFile))
         {
-            doc = MessagePackSerializer.Deserialize<RagDocument>(File.OpenRead(ragFile));
+            using var stream = File.OpenRead(ragFile);
+            doc = MessagePackSerializer.Deserialize<RagDocument>(stream);
         }
         else
         {
@@ -130,7 +131,11 @@ public partial class MainWindow : Window
                 EncodingProgressTextBlock.Text = $"编码中：{p}%";
             });
 
-            await Task.Run(() => LLMUtils.ConvertEmbedding(doc, progress));
+            await Task.Run(() =>
+            {
+                LLMUtils.ConvertEmbedding(doc, progress);
+            });
+
             var bytes = MessagePackSerializer.Serialize(doc);
             File.WriteAllBytes(ragFile, bytes);
         }
