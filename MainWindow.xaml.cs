@@ -13,6 +13,8 @@ using System.Windows.Media;
 using System.Windows.Input;
 using System.Globalization;
 using System.Windows.Data;
+using System.Text;
+using Ollama;
 
 namespace HistoryRag;
 
@@ -30,6 +32,8 @@ public partial class MainWindow : Window
         {
             dataDirectory = Path.Combine(AppContext.BaseDirectory, "../../../data/history_24");
         }
+
+        EnvCheck();
 
         LoadBooks();
     }
@@ -170,8 +174,18 @@ public partial class MainWindow : Window
                 IsQuestion = true,
             });
 
+            // 先走一个不带RAG的提问
+            var zeroRet = await LLMUtils.Chat(queryTxt);
+            ChatListBox.Items.Add(new ChatMessage
+            {
+                Message = zeroRet,
+                IsQuestion = false,
+            });
+
+            // 查询当前选择的历史书
             var findItem = await Query(queryTxt, doc);
 
+            // 构建第一次查询提示词模板
             var firstQuery = Prompts.QAPromptTemplate(findItem.Window, queryTxt);
             var firstRet = await LLMUtils.Chat(firstQuery);
 
@@ -182,6 +196,7 @@ public partial class MainWindow : Window
                 ToolTipContent = findItem.Window
             });
 
+            // 构建二次查询提示词模板，对第一次的结果做确认或者微调
             var secendQuery = Prompts.RefinePromptTemplate(findItem.Window, queryTxt, firstRet);
             var result = await LLMUtils.Chat(secendQuery);
 
@@ -232,6 +247,62 @@ public partial class MainWindow : Window
         }
 
         return findItem;
+    }
+
+    void EnvCheck()
+    {
+        Task.Run(() =>
+        {
+            try
+            {
+                var envCheck = _envCheck();
+                Dispatcher.Invoke(() =>
+                {
+                    ChatListBox.Items.Add(new ChatMessage
+                    {
+                        Message = envCheck,
+                        IsQuestion = false,
+                    });
+                });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.ToString());
+            }
+        });
+    }
+    string _envCheck()
+    {
+        // 对系统进行自检
+        StringBuilder ret = new StringBuilder();
+
+        if (!Directory.Exists(dataDirectory))
+        {
+            ret.AppendLine("数据目录不存在：" + dataDirectory);
+        }
+        else
+        {
+            var files = Directory.GetFiles(dataDirectory, "*.txt");
+            ret.AppendLine("找到 " + files.Length + " 本书籍。");
+        }
+
+        OllamaApiClient api = new OllamaApiClient();
+        var models = api.Models.ListModelsAsync();
+        models.Wait();
+        if (models.Result.Models.Count > 0)
+        {
+            ret.AppendLine("找到 " + models.Result.Models.Count + " 个模型。");
+
+            foreach (var model in models.Result.Models)
+            {
+                ret.AppendLine("模型：" + model.Model1);
+            }
+        }
+        else
+        {
+            ret.AppendLine("未找到任何模型。");
+        }
+        return ret.ToString();
     }
 }
 public class WidthConverter : IMultiValueConverter
