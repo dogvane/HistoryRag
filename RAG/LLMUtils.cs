@@ -37,10 +37,10 @@ namespace HistoryRag.RAG
             for(var i =0;i < len; i++)
             {
                 var item = doc.Nodes[i];
-                if (item.ChunkEmbding != null && item.ChunkEmbding.Length > 0)
+                if (item.ChunkEmbedding != null && item.ChunkEmbedding.Length > 0)
                     continue;
 
-                item.ChunkEmbding = await GetEmbedding(item.Chunk);
+                item.ChunkEmbedding = await GetEmbedding(item.Chunk);
 
                 if (progress != null)
                 {

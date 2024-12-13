@@ -40,8 +40,8 @@ namespace HistoryRag.RAG
             /// <summary>
             /// 对分块内容的编码
             /// </summary>
-            [Key("chunkembding")]
-            public float[] ChunkEmbding { get; set; }
+            [Key("chunkembedding")]
+            public float[] ChunkEmbedding { get; set; }
 
             public override string ToString()
             {

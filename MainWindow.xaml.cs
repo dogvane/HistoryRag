@@ -82,7 +82,7 @@ public partial class MainWindow : Window
             File.WriteAllBytes(ragFile, bytes);
         }
 
-        var embedding = doc.Nodes.Count(o => o.ChunkEmbding != null);
+        var embedding = doc.Nodes.Count(o => o.ChunkEmbedding != null);
 
         // 显示文档信息
         DocumentInfoTextBlock.Text = $"书名：{doc.Name}\n" +
@@ -119,7 +119,7 @@ public partial class MainWindow : Window
             return;
         }
 
-        var embedding = doc.Nodes.Count(o => o.ChunkEmbding != null);
+        var embedding = doc.Nodes.Count(o => o.ChunkEmbedding != null);
 
         if (embedding < doc.Nodes.Count)
         {
@@ -234,10 +234,10 @@ public partial class MainWindow : Window
 
         foreach (var item in ragDocument.Nodes)
         {
-            if (item.ChunkEmbding == null || item.ChunkEmbding.Length == 0)
+            if (item.ChunkEmbedding == null || item.ChunkEmbedding.Length == 0)
                 continue;
 
-            var distance = TensorPrimitives.Distance(embed.AsSpan(), item.ChunkEmbding.AsSpan());
+            var distance = TensorPrimitives.Distance(embed.AsSpan(), item.ChunkEmbedding.AsSpan());
 
             if (distance < current_distance)
             {
